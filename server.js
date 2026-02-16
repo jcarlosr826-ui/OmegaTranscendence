@@ -1,36 +1,78 @@
 // backend/server.js
+
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { exec } = require('child_process');
 
+
 const app = express();
+
+
+/* ========= Middleware ========= */
+
+
 app.use(cors());
 app.use(express.json());
 
-// Import API routes from backend/api/server.js
+
+/* ========= Routes ========= */
+
+
 const apiRoutes = require('./api/server');
 app.use('/api', apiRoutes);
 
-// Root route
+
 app.get('/', (req, res) => {
   res.send('Omega Backend Running');
 });
 
-// Auto-launch modules or scripts if needed
+
+/* ========= Auto Launcher (Local Only) ========= */
+
+
 function launchModules() {
-  const scriptPath = path.join(__dirname, '..', 'scripts', '_silent-run.ps1');
-  exec(`powershell -ExecutionPolicy Bypass -File "${scriptPath}"`, (error, stdout, stderr) => {
-    if (error) console.log(`Auto-launch error: ${error.message}`);
-    if (stderr) console.log(`Auto-launch stderr: ${stderr}`);
-    if (stdout) console.log(`Auto-launch stdout: ${stdout}`);
-  });
+
+
+  if (process.env.NODE_ENV === 'production') return;
+  if (process.platform !== 'win32') return;
+
+
+  try {
+    const scriptPath = path.join(
+      __dirname,
+      '..',
+      'scripts',
+      '_silent-run.ps1'
+    );
+
+
+    exec(
+      `powershell -ExecutionPolicy Bypass -File "${scriptPath}"`,
+      (error, stdout, stderr) => {
+        if (error) console.log(error.message);
+        if (stderr) console.log(stderr);
+        if (stdout) console.log(stdout);
+      }
+    );
+
+
+  } catch (err) {
+    console.log(err.message);
+  }
 }
 
-// Start server
-const PORT = 5000;
-app.listen(PORT, () => {
+
+/* ========= START SERVER ========= */
+
+
+const PORT = process.env.PORT || 10000; // ⭐ IMPORTANT CHANGE
+
+
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Omega Backend Running On ${PORT}`);
-  // Uncomment below to auto-launch modules when backend starts
-  // launchModules();
+
+
+  launchModules();
 });
