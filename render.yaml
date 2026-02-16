@@ -1,0 +1,19 @@
+# render.yaml - OmegaTranscendence backend
+services:
+  - type: web
+    name: omega-backend
+    env: node
+    plan: starter # change to "standard" if you want more resources
+    region: california # change to your preferred region
+    branch: main
+    buildCommand: npm install
+    startCommand: node server.js
+    autoDeploy: true
+    disk:
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Add other environment variables here, e.g. database URLs, API keys
+      # - key: DATABASE_URL
+      #   value: <your-database-url>
