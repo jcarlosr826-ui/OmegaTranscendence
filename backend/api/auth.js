@@ -1,36 +1,85 @@
-// backend/api/auth.js
-const express = require('express');
-const jwt = require('jsonwebtoken');
-const router = express.Router();
+const router = require("express").Router();
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
+function requireEnv(name) {
+  const v = process.env[name];
+  if (!v) throw new Error(`Missing env var: ${name}`);
+  return v;
+}
 
-const JWT_SECRET = process.env.JWT_SECRET;
+function signToken(payload) {
+  const secret = requireEnv("JWT_SECRET");
+  return jwt.sign(payload, secret, { expiresIn: "7d" });
+}
 
+function authMiddleware(req, res, next) {
+  const h = req.headers.authorization || "";
+  const token = h.startsWith("Bearer ") ? h.slice(7) : null;
+  if (!token) return res.status(401).json({ ok: false, error: "Missing token" });
 
-// Dummy user DB (replace with real DB)
-const users = [{ id: 1, email: 'admin@omega.com', password: 'omega123' }];
+  try {
+    const secret = requireEnv("JWT_SECRET");
+    req.user = jwt.verify(token, secret);
+    next();
+  } catch {
+    return res.status(401).json({ ok: false, error: "Invalid token" });
+  }
+}
 
+/**
+ * Personal Admin Login (no DB)
+ * Required env vars:
+ * - ADMIN_EMAIL
+ * - ADMIN_PASSWORD_HASH (bcrypt)
+ * - JWT_SECRET
+ */
 
-// Register (simplified)
-router.post('/register', (req, res) => {
-  const { email, password } = req.body;
-  if (users.find(u => u.email === email)) return res.status(400).json({ error: 'User exists' });
-  const newUser = { id: users.length + 1, email, password };
-  users.push(newUser);
-  res.json({ message: 'Registered successfully', user: { id: newUser.id, email } });
+router.post("/register", async (req, res) => {
+  const { email, password } = req.body || {};
+  if (!email || !password) return res.status(400).json({ ok: false, error: "email and password required" });
+
+  if (process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD_HASH) {
+    return res.status(409).json({ ok: false, error: "Admin already configured. Use /login." });
+  }
+
+  const hash = await bcrypt.hash(password, 12);
+
+  return res.json({
+    ok: true,
+    message: "Admin hash generated. Put these in Render env vars:",
+    ADMIN_EMAIL: email,
+    ADMIN_PASSWORD_HASH: hash,
+  });
 });
 
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body || {};
+  if (!email || !password) return res.status(400).json({ ok: false, error: "email and password required" });
 
-// Login
-router.post('/login', (req, res) => {
-  const { email, password } = req.body;
-  const user = users.find(u => u.email === email && u.password === password);
-  if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+  const adminEmail = process.env.ADMIN_EMAIL;
+  const adminHash = process.env.ADMIN_PASSWORD_HASH;
 
+  if (!adminEmail || !adminHash) {
+    return res.status(500).json({
+      ok: false,
+      error: "Admin not configured. Set ADMIN_EMAIL and ADMIN_PASSWORD_HASH in environment variables.",
+    });
+  }
 
-  const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: '12h' });
-  res.json({ message: 'Login successful', token });
+  if (String(email).toLowerCase() !== String(adminEmail).toLowerCase()) {
+    return res.status(401).json({ ok: false, error: "Invalid credentials" });
+  }
+
+  const ok = await bcrypt.compare(password, adminHash);
+  if (!ok) return res.status(401).json({ ok: false, error: "Invalid credentials" });
+
+  const token = signToken({ email: adminEmail, role: "admin" });
+  return res.json({ ok: true, token, user: { email: adminEmail, role: "admin" } });
 });
 
+router.get("/me", authMiddleware, (req, res) => {
+  return res.json({ ok: true, user: req.user });
+});
 
 module.exports = router;
