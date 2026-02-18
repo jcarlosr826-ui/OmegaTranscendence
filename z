@@ -1,0 +1,2 @@
+Kill any task taking up the port
+$pid = (Get-NetTCPConnection -LocalPort 10000).OwningProcess; if ($pid) { Stop-Process -Id $pid -Force }; npm start

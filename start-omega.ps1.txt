@@ -1,0 +1,32 @@
+# Path to Inno Setup Compiler
+$innoCompiler = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+
+# Generate Inno Setup script dynamically
+$issContent = @"
+[Setup]
+AppName=OmegaTranscendence
+AppVersion=1.0
+DefaultDirName={pf}\OmegaTranscendence
+DefaultGroupName=OmegaTranscendence
+OutputBaseFilename=START-OMEGA-LIVE
+Compression=lzma
+SolidCompression=yes
+
+[Files]
+Source: "*"; DestDir: "{app}"; Flags: recursesubdirs
+
+[Icons]
+Name: "{group}\OmegaTranscendence"; Filename: "{app}\_silent-run.ps1"
+
+[Run]
+Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -File `{app}\_silent-run.ps1`"; Flags: runhidden
+"@
+
+# Write to temp ISS file
+$tempISS = "$PSScriptRoot\installers\omega_installer.iss"
+$issContent | Out-File -FilePath $tempISS -Encoding UTF8
+
+# Compile EXE
+& $innoCompiler $tempISS
+
+Write-Host "START-OMEGA-LIVE.exe generated in installers folder!" -ForegroundColor Cyan

@@ -1,0 +1,14 @@
+const fs = require('fs');
+const disputes = require('../config.json').disputeTemplates;
+
+function generateDispute(clientName, issue){
+    // Select template
+    const template = disputes[0]; // Placeholder
+    const letter = template.replace('{{name}}', clientName).replace('{{issue}}', issue);
+    const filename = `dispute_${clientName}_${Date.now()}.txt`;
+    fs.writeFileSync(`./${filename}`, letter);
+    console.log(`Dispute letter generated: ${filename}`);
+}
+
+// Example usage
+generateDispute('John Doe', 'Late Payment');

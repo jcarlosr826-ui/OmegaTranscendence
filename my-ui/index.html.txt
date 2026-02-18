@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>OmegaTranscendence UI</title>
+</head>
+<body>
+    <h1>OmegaTranscendence API UI</h1>
+    
+    <button onclick="getStatus()">Get Backend Status</button>
+    <pre id="output"></pre>
+
+    <script>
+        async function getStatus() {
+            try {
+                // Replace this with a real backend endpoint if you know it
+                const response = await fetch('http://localhost:5000/api/status');
+                const data = await response.json();
+                document.getElementById('output').textContent = JSON.stringify(data, null, 2);
+            } catch (err) {
+                document.getElementById('output').textContent = 'Error: ' + err;
+            }
+        }
+    </script>
+</body>
+</html>

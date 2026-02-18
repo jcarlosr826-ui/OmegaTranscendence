@@ -1,0 +1,6 @@
+{
+  "proxies": ["http://proxy1:port","http://proxy2:port","http://proxy3:port"],
+  "aiTrading": { "modelPath": "backend/models/resale_nn.model" },
+  "creditAI": { "templatePath": "credit_ai/templates/" },
+  "stores": ["Walmart", "Costco", "HomeDepot", "Lowes", "Macy's", "JCPenny", "Amazon", "BestBuy"]
+}

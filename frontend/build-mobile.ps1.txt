@@ -1,0 +1,19 @@
+# Build mobile apps automatically (Android + iOS)
+$ExpoDir = "$PSScriptRoot\frontend"
+
+Write-Host "Starting mobile build process..." -ForegroundColor Cyan
+
+try {
+    # Android APK
+    Write-Host "Building Android APK..."
+    cd $ExpoDir
+    npx eas build --platform android --non-interactive
+    Write-Host "Android build complete."
+
+    # iOS IPA (requires Apple credentials setup)
+    Write-Host "Building iOS IPA..."
+    npx eas build --platform ios --non-interactive
+    Write-Host "iOS build complete."
+} catch {
+    Write-Host "Error during mobile build: $_" -ForegroundColor Red
+}

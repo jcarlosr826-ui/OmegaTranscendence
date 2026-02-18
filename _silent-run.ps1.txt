@@ -1,0 +1,109 @@
+# -----------------------------
+# OmegaTranscendence Force-Rewrite Launcher
+# -----------------------------
+
+$omegaFolder = "C:\Program Files (x86)\OmegaTranscendence"
+$silentRunFile = Join-Path $omegaFolder "_silent-run.ps1"
+$backendFolder = Join-Path $omegaFolder "backend"
+$backendFile = Join-Path $backendFolder "server.js"
+$uiFolder = Join-Path $omegaFolder "my-ui"
+$indexFile = Join-Path $uiFolder "index.html"
+
+# -----------------------------
+# Step 1: Force-fill _silent-run.ps1
+# -----------------------------
+$silentRunContent = @"
+# -----------------------------
+# OmegaTranscendence Silent Runner
+# -----------------------------
+Write-Host '🔹 Starting Omega backend...'
+
+# Kill stale Node.js/backend processes
+\$port = 5000
+Get-NetTCPConnection -LocalPort \$port -ErrorAction SilentlyContinue | ForEach-Object {
+    Stop-Process -Id \$_.OwningProcess -Force
+}
+Get-Process node -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id \$_.Id -Force }
+
+Start-Sleep 1
+
+# Start backend server
+\$backendPath = '$backendFile'
+if (Test-Path \$backendPath) {
+    Write-Host '✅ Launching backend server...'
+    Start-Process node -ArgumentList "`"\$backendPath`""
+} else {
+    Write-Host '❌ Backend server.js not found at ' \$backendPath
+}
+
+Write-Host '🔹 Backend started (if no errors)'
+"@
+
+Set-Content -Path $silentRunFile -Value $silentRunContent -Force
+Write-Host "✅ _silent-run.ps1 overwritten at $silentRunFile"
+
+# -----------------------------
+# Step 2: Kill stale backend processes
+# -----------------------------
+Write-Host "🔹 Killing stale backend/node processes..."
+Get-NetTCPConnection -LocalPort 5000 -ErrorAction SilentlyContinue | ForEach-Object {
+    Stop-Process -Id $_.OwningProcess -Force
+}
+Get-Process node -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.Id -Force }
+Start-Sleep 2
+
+# -----------------------------
+# Step 3: Start backend via _silent-run.ps1
+# -----------------------------
+Write-Host "🔹 Launching backend..."
+Start-Process powershell -ArgumentList '-NoExit','-File', $silentRunFile
+
+# -----------------------------
+# Step 4: Create frontend if missing
+# -----------------------------
+if (!(Test-Path $uiFolder)) { 
+    New-Item -ItemType Directory -Path $uiFolder -Force 
+    Write-Host "✅ Created frontend folder at $uiFolder"
+}
+
+$indexContent = @"
+<!DOCTYPE html>
+<html>
+<head>
+<title>OmegaTranscendence UI</title>
+<style>
+body { font-family: Arial; padding: 20px; background: #f0f0f0; }
+h1 { color: #333; }
+</style>
+</head>
+<body>
+<h1>OmegaTranscendence UI</h1>
+<p>Backend should be running on port 5000</p>
+</body>
+</html>
+"@
+
+Set-Content -Path $indexFile -Value $indexContent -Force
+Write-Host "✅ Frontend index.html created at $indexFile"
+
+# -----------------------------
+# Step 5: Start frontend HTTP server
+# -----------------------------
+Write-Host "🔹 Starting frontend HTTP server on port 8080..."
+Start-Process powershell -ArgumentList '-NoExit','-Command',"cd '$uiFolder'; python -m http.server 8080"
+
+# -----------------------------
+# Step 6: Open browser
+# -----------------------------
+Start-Process "http://localhost:8080"
+
+# -----------------------------
+# Step 7: Show LAN IP for mobile access
+# -----------------------------
+$lanIP = (Get-NetIPAddress -AddressFamily IPv4 -InterfaceAlias "Wi-Fi","Ethernet" `
+          | Where-Object { $_.IPAddress -notlike "169.*" -and $_.IPAddress -notlike "127.*" } `
+          | Select-Object -First 1).IPAddress
+if (-not $lanIP) { $lanIP = "localhost" }
+
+Write-Host "✅ OmegaTranscendence UI launched! LAN URL: http://$lanIP:8080”
+
