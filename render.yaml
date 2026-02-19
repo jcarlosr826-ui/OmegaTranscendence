@@ -10,3 +10,18 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+
+  - type: static
+    name: omega-frontend
+    plan: free
+    region: oregon
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: build
+    envVars:
+      - key: REACT_APP_API_BASE_URL
+        value: https://omega-backend-77cw.onrender.com
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
