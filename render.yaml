@@ -11,8 +11,9 @@ services:
       - key: NODE_ENV
         value: production
 
-  - type: static
+  - type: web
     name: omega-frontend
+    runtime: static
     plan: free
     region: oregon
     rootDir: frontend
