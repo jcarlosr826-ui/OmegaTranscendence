@@ -1,25 +1,12 @@
 services:
   - type: web
-    name: omegatranscendence-backend
+    name: omega-backend
     runtime: node
     plan: free
+    region: oregon
+    rootDir: backend
     buildCommand: npm install
     startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production
-
-      - key: PORT
-        value: 10000
-
-      - key: JWT_SECRET
-        value: A@ejjd280526061408
-
-      - key: DATABASE_URL
-        value: postgresql://omegadb_q17w_user:1ephba8f84owVgWHQ7uJxDfPUh390X6X@dpg-d69dgq86fj8s73cgscq0-a.render.internal/omegadb_q17w
-
-      - key: OPENAI_API_KEY
-        value: sk-your-openai-key
-
-      - key: OTHER_API_KEY
-        value: rnd_MeF1UfFJDcXkI64rKjcVLypgLLzP
