@@ -7,6 +7,7 @@ services:
     rootDir: backend
     buildCommand: npm install
     startCommand: node server.js
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
@@ -14,7 +15,6 @@ services:
   - type: web
     name: omega-frontend
     runtime: static
-    plan: free
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: build
