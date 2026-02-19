@@ -7,20 +7,18 @@ services:
     rootDir: backend
     buildCommand: npm install
     startCommand: node server.js
-    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
 
-  - type: web
+  - type: static_site
     name: omega-frontend
-    runtime: static
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: build
     envVars:
       - key: REACT_APP_API_BASE_URL
-        value: https://omega-backend-77cw.onrender.com
+        value: https://omega-backend-i15y.onrender.com
     routes:
       - type: rewrite
         source: /*
